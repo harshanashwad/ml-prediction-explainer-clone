@@ -5,7 +5,7 @@ This is where the API routes live.
 '''
 
 from fastapi import APIRouter, UploadFile, HTTPException
-from app.utils.io import read_uploaded_csv
+from app.utils.io import read_uploaded_csv, validate_dataframe
 
 router = APIRouter() # Create a router instance. Lets you modularize routes — good for scaling APIs.
 
@@ -16,6 +16,11 @@ async def upload_csv(file: UploadFile):
 
     try:
         df = read_uploaded_csv(file)
-        return {"columns": df.columns.tolist()}
+        validation = validate_dataframe(df)
+
+        # Optional: Save it for reuse
+        df.to_csv("data/last_uploaded.csv", index=False)
+
+        return validation
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -6,6 +6,9 @@ This is where the API routes live.
 
 from fastapi import APIRouter, UploadFile, HTTPException
 from app.utils.io import read_uploaded_csv, validate_dataframe
+from pydantic import BaseModel
+import pandas as pd
+from app.models.train import train_model
 
 router = APIRouter() # Create a router instance. Lets you modularize routes — good for scaling APIs.
 
@@ -18,9 +21,30 @@ async def upload_csv(file: UploadFile):
         df = read_uploaded_csv(file)
         validation = validate_dataframe(df)
 
-        # Optional: Save it for reuse
+        # Optional: Save it for reuse. If you observe corrupted csv files are mostly handled in except block so it's not even saved temporarily. It means in many cases, corrupted files are (mostly) not even allowed to enter the pipeline let alone dealing with that in a later step.
         df.to_csv("data/last_uploaded.csv", index=False)
 
         return validation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+'''
+Pydantic model for the request body: 
+Incoming json request is parsed into a TrainRequest object by FastAPI. 
+This keeps the code clean and secure — no manual request.json()["target"] or checks.
+'''
+
+class TrainRequest(BaseModel):
+    target: str
+
+@router.post("/train-model")
+async def train_endpoint(request: TrainRequest):
+    try:
+        df = pd.read_csv("data/last_uploaded.csv")
+        if request.target not in df.columns:
+            raise HTTPException(status_code=400, detail="Invalid target column")
+        
+        result = train_model(df, request.target)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

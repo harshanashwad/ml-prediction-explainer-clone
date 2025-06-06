@@ -2,12 +2,35 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, mean_squared_error
 import pandas as pd
+from app.utils.io import check_high_cardinality_and_identifiers
+
 
 def train_model(df: pd.DataFrame, target: str):
     X = df.drop(columns=[target]) # Drop the target column from the dataframe
     y = df[target] # Target column
 
-    # Basic type detection
+    # 1. Preprocessing: Drop constant columns, completely null columns, and likely identifiers
+    _, likely_identifiers = check_high_cardinality_and_identifiers(X)
+    drop_cols = likely_identifiers + [col for col in X.columns if X[col].nunique() <= 1]
+    X = X.drop(columns=drop_cols) # Removes any rows in X that have NaNs
+    
+    # 2. Handle missing values: remove rows with missing values
+    # Step 1: Drop rows where y is missing
+    non_null_mask = y.notnull()
+    X = X.loc[non_null_mask]
+    y = y.loc[non_null_mask]
+
+    # Step 2: Drop remaining NaNs in X
+    X = X.dropna()
+    y = y.loc[X.index]  # realign just in case
+
+
+    # 3. Encoding and Transformations
+    # One hot encoding for object/categorical features
+    X = pd.get_dummies(X)
+
+
+    # Basic type detection: placeholder detection criteria
     if y.dtype in ['float64', 'int64'] and y.nunique() > 15:
         task = "regression"
         model = RandomForestRegressor()
@@ -15,8 +38,7 @@ def train_model(df: pd.DataFrame, target: str):
         task = "classification"
         model = RandomForestClassifier()
 
-    # One hot encoding for object/categorical features
-    X = pd.get_dummies(X)
+   
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     model.fit(X_train, y_train)
@@ -29,12 +51,20 @@ def train_model(df: pd.DataFrame, target: str):
             "task": task,
             "model_type": "RandomForestClassifier",
             "accuracy": round(acc, 3),
-            "confusion_matrix": cm
+            "confusion_matrix": cm,
+            "dropped_columns": drop_cols,
+            "final_columns": X.columns.tolist(),
+            "row_count": len(df),
+            "row_count_after_preprocessing": len(X)
         }
     else:
         mse = mean_squared_error(y_test, y_pred)
         return {
             "task": task,
             "model_type": "RandomForestRegressor",
-            "mse": round(mse, 3)
+            "mse": round(mse, 3),
+            "dropped_columns": drop_cols,
+            "final_columns": X.columns.tolist(),
+            "row_count": len(df),
+            "row_count_after_preprocessing": len(X)
         }

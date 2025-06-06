@@ -33,10 +33,10 @@ ml-prediction-explainer/
 ├── app/
 │   ├── main.py              # FastAPI entry point
 │   ├── routes/              # API endpoints
-│   ├── models/              # ML training & SHAP logic
+│   ├── ml_core/              # ML training & SHAP logic
 │   ├── core/                # App config
 │   ├── utils/               # I/O helpers
-│   └── schemas/             # Request/response models
+│   └── schemas/             # Request/response formats
 ├── data/                    # Temp file storage (gitignored)
 ├── notebooks/               # Experiments & development
 ├── requirements.txt         # Dependencies

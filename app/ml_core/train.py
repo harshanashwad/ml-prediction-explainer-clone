@@ -3,6 +3,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, mean_squared_error
 import pandas as pd
 from app.utils.io import check_high_cardinality_and_identifiers
+import joblib
+import os
 
 
 def train_model(df: pd.DataFrame, target: str):
@@ -43,6 +45,10 @@ def train_model(df: pd.DataFrame, target: str):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
+
+    # After the training is done, we can save the model in artifacts folder (not tracked by git)
+    os.makedirs("artifacts", exist_ok=True)
+    joblib.dump(model, "artifacts/latest_model.pkl")
 
     if task == "classification":
         acc = accuracy_score(y_test, y_pred)

@@ -8,7 +8,7 @@ from fastapi import APIRouter, UploadFile, HTTPException
 from app.utils.io import read_uploaded_csv, validate_dataframe
 from pydantic import BaseModel
 import pandas as pd
-from app.models.train import train_model
+from app.ml_core.train import train_model
 
 router = APIRouter() # Create a router instance. Lets you modularize routes — good for scaling APIs.
 

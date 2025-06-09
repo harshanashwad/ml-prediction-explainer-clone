@@ -1,6 +1,6 @@
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix, mean_squared_error
+from sklearn.metrics import accuracy_score, confusion_matrix, mean_squared_error, precision_score, recall_score, f1_score, mean_absolute_error, r2_score
 import pandas as pd
 from app.utils.io import check_high_cardinality_and_identifiers
 import joblib
@@ -53,24 +53,33 @@ def train_model(df: pd.DataFrame, target: str):
     if task == "classification":
         acc = accuracy_score(y_test, y_pred)
         cm = confusion_matrix(y_test, y_pred).tolist()
-        return {
-            "task": task,
-            "model_type": "RandomForestClassifier",
-            "accuracy": round(acc, 3),
-            "confusion_matrix": cm,
-            "dropped_columns": drop_cols,
-            "final_columns": X.columns.tolist(),
-            "row_count": len(df),
-            "row_count_after_preprocessing": len(X)
-        }
+        precision = precision_score(y_test, y_pred, average="weighted")
+        recall = recall_score(y_test, y_pred, average="weighted")
+        f1 = f1_score(y_test, y_pred, average="weighted")
+
     else:
         mse = mean_squared_error(y_test, y_pred)
-        return {
-            "task": task,
-            "model_type": "RandomForestRegressor",
+        mae = mean_absolute_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        
+    return {
+        "task": task,
+        "model_type": type(model).__name__,
+        "metrics": {
+            "accuracy": round(acc, 3),
+            "confusion_matrix": cm,
+            "precision": round(precision, 3),
+            "recall": round(recall, 3),
+            "f1_score": round(f1, 3)
+        } if task == "classification" else {
             "mse": round(mse, 3),
-            "dropped_columns": drop_cols,
-            "final_columns": X.columns.tolist(),
-            "row_count": len(df),
-            "row_count_after_preprocessing": len(X)
-        }
+            "mae": round(mae, 3),
+            "r2": round(r2, 3)
+        },
+        "final_columns": X.columns.tolist(),
+        "dropped_columns": drop_cols,
+        "row_count_before_preprocessing": len(df),
+        "row_count_after_preprocessing": len(X),
+        "feature_encoding": "one_hot",
+        "missing_value_strategy": "drop"
+    }

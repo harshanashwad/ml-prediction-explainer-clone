@@ -54,12 +54,9 @@ def compute_shap_values(start=0, end=5):
     shape_dict["global_importances"] = global_importances.shape
     grouped_global_importances = group_global_shap_values(global_importances, X_test.columns)
 
-    # Local explanations for selected rows
-    local_explanations = []
     return {
         "model_type": type(model).__name__,
         "global_feature_importance": grouped_global_importances,
-        "local_explanations": local_explanations,
         "shape_dict": shape_dict,
         "n": len(grouped_global_importances)
     }

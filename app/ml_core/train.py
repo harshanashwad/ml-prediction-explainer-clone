@@ -49,6 +49,7 @@ def train_model(df: pd.DataFrame, target: str):
     # After the training is done, we can save the model in artifacts folder (not tracked by git)
     os.makedirs("artifacts", exist_ok=True)
     joblib.dump(model, "artifacts/latest_model.pkl")
+    X_test.to_csv("artifacts/X_test.csv", index=False) # Save X_test in the artifacts folder
 
     if task == "classification":
         acc = accuracy_score(y_test, y_pred)

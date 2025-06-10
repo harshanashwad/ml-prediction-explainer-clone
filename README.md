@@ -41,3 +41,46 @@ ml-prediction-explainer/
 ├── notebooks/               # Experiments & development
 ├── requirements.txt         # Dependencies
 └── README.md
+```
+
+## Commit Message Convention
+
+To maintain a clear and organized commit history, this project follows the **Conventional Commits** specification. Commit messages are structured as:
+
+```
+<type>(<scope>): <description>
+```
+
+- **Types**:
+
+  - `feat`: New features (e.g., adding an API endpoint or SHAP visualization).
+  - `fix`: Bug fixes (e.g., correcting model training errors).
+  - `refactor`: Code improvements without functional changes.
+  - `docs`: Documentation updates (e.g., README or code comments).
+  - `test`: Adding or modifying tests.
+  - `chore`: Maintenance tasks (e.g., updating dependencies).
+  - `style`: Code style or formatting changes.
+  - `perf`: Performance improvements.
+  - `build`: Build system or dependency updates.
+  - `ci`: Continuous integration changes.
+  - `init`: Initial setup of new modules or project structure.
+
+- **Scopes**:
+
+  - `api`: FastAPI-related code (e.g., `app/main.py`, `app/routes`).
+  - `ml`: Machine learning logic (e.g., model training in `app/ml_core`).
+  - `shap`: SHAP explanation logic (e.g., feature importance in `app/ml_core`).
+  - `utils`: Helper functions or I/O (e.g., `app/utils`).
+  - `config`: Application configuration (e.g., `app/core`).
+  - `data`: Data handling or storage (e.g., `data/`).
+  - `docs`: Documentation (e.g., `README.md`).
+  - `notebooks`: Experimental code in `notebooks/`.
+  - `build`: Build or dependency changes (e.g., `requirements.txt`).
+  - `ci`: CI/CD pipeline updates.
+
+- **Examples**:
+
+  - `feat(api): add endpoint for uploading CSV datasets`
+  - `fix(ml): handle missing values in model training`
+  - `refactor(shap): simplify SHAP value aggregation logic`
+  - `docs(docs): update README with installation instructions`

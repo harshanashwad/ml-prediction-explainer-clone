@@ -49,7 +49,8 @@ async def train_endpoint(request: TrainRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+# Query parameters are are specified in the URL after a ?. so if not provided, it will default to 0 and 5.
 @router.get("/explain-model")
 async def explain_endpoint(start: int = Query(0), end: int = Query(5)):
     try:

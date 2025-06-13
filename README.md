@@ -38,6 +38,8 @@ ml-prediction-explainer/
 │   ├── utils/               # I/O helpers
 │   └── schemas/             # Request/response formats
 ├── data/                    # Temp file storage (gitignored)
+├── tests/                   # Test suite
+│   ├── end_to_end_test.py   # run routine for all features --> dump response
 ├── notebooks/               # Experiments & development
 ├── requirements.txt         # Dependencies
 └── README.md

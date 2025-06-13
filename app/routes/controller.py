@@ -9,7 +9,7 @@ from app.utils.io import read_uploaded_csv, validate_dataframe
 from pydantic import BaseModel
 import pandas as pd
 from app.ml_core.train import train_model
-from app.ml_core.explain import compute_shap_values
+from app.ml_core.explain import shap_values
 
 router = APIRouter() # Create a router instance. Lets you modularize routes — good for scaling APIs.
 
@@ -54,6 +54,6 @@ async def train_endpoint(request: TrainRequest):
 @router.get("/explain-model")
 async def explain_endpoint(start: int = Query(0), end: int = Query(5)):
     try:
-        return compute_shap_values(start, end)
+        return shap_values(start, end)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

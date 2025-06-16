@@ -66,6 +66,8 @@ def test_full_pipeline():
 
             results[feature] = {
                 "status": "success",
+                # "encoded_features_used_for_training": train_response.json().get('final_columns'),
+                # "encoded_feature_count": len(train_response.json().get('final_columns')),
                 "response": explain_response.json()
             }
             

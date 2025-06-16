@@ -48,7 +48,7 @@ def group_global_shap_values_regression(global_vals, columns):
     grouped.sort(key=lambda x: x["importance"], reverse=True)
     return grouped
 
-def compute_local_shap_values_regression(model, X_test, shap_values, start=0, end=5):
+def compute_local_shap_values_regression(model, X_test, shap_values, base_values, start=0, end=1):
     # shape_dict = {}
     # shape_dict["shap_values"] = shap_values.shape
     # shape_dict["global_importances"] = global_importances.shape
@@ -63,36 +63,38 @@ def compute_local_shap_values_regression(model, X_test, shap_values, start=0, en
         shap_row = shap_values[i]
 
         local_explanation = {} # A map for each feature's contribution for the current row
-        total = 0
-        # Sum of all feature's shap value for a prediction = deviation of model output from baseline
         for feature, subcols in mapping.items():
             feature_contribution = sum(shap_row[X_test.columns.get_loc(c)] for c in subcols)
             local_explanation[feature] = round(feature_contribution, 3)
-            total += feature_contribution
         
+        # Sum of all feature's shap value for a prediction = deviation of model output from baseline
+        # verify shap values make sense by checking the difference of shap values and model deviation from baseline are equal
+        sum_of_shap_values = sum(local_explanation.values())
+        check = sum_of_shap_values - (prediction - base_values[0]) # This should be zero for any row
+
         local_explanations.append({
             "row_index": i,
             "prediction": prediction,
             "shap_contributions": local_explanation,
-            # "total": round(total, 3)
+            "check": check
         })
     return local_explanations
 
 ############################################################
 ### Classification
 
-# Helper function to safely convert predictions based on data type of the target variable
-def convert_prediction(pred):
-    if isinstance(pred, (np.integer, int)):
-        return int(pred)
-    elif isinstance(pred, (np.floating, float)):
-        return float(pred)
-    elif isinstance(pred, (np.bool_, bool)):
-        return bool(pred)
+# Helper function to safely convert predictions and class_labels based on data type of the target variable (np types -> python native to fix errors in json response)
+def convert_predictions_and_class_labels(val):
+    if isinstance(val, (np.integer, int)):
+        return int(val)
+    elif isinstance(val, (np.floating, float)):
+        return float(val)
+    elif isinstance(val, (np.bool_, bool)):
+        return bool(val)
     else:
-        return str(pred)  # Fallback to string representation
+        return str(val)  # Fallback to string representation
     
-def group_global_shap_values_classification(global_importances, columns):
+def group_global_shap_values_classification(global_importances, columns, classes):
     num_classes = global_importances.shape[1] # here, global_importances has a shape (num_features, classes), say (20, 6)
     feature_mapping = get_feature_group_map(columns)
     grouped = []
@@ -112,9 +114,8 @@ def group_global_shap_values_classification(global_importances, columns):
         
         grouped_global_importances_current_class.sort(key=lambda x: x["importance"], reverse=True)
         grouped.append({
-            "class": class_idx,
+            "class": convert_predictions_and_class_labels(classes[class_idx]),
             "features": grouped_global_importances_current_class,
-            # "base_value": base_values[class_idx]  # Reference value for this class
         })
 
     return grouped
@@ -123,15 +124,12 @@ def compute_local_shap_values_classification(model, X_test, shap_values, base_va
     local_explanations = []
     feature_mapping = get_feature_group_map(X_test.columns)
     num_classes = shap_values.shape[2]
-
-    # print(base_values.shape, type(base_values), base_values, "base values")
-
+    classes = model.classes_
 
     for i in range(start, min(end, len(X_test))):
         
         row = X_test.iloc[i: i+1]
         prediction = model.predict(row)[0]
-        # print('prediction', prediction, type(prediction))
         proba = model.predict_proba(row)[0]
 
 
@@ -148,22 +146,22 @@ def compute_local_shap_values_classification(model, X_test, shap_values, base_va
                 contributions[feature] = round(float(sum(current_class_shap_values[i] for i in indices)), 3)
             
             class_explanations.append({
-                "class": class_idx,
+                "class": convert_predictions_and_class_labels(classes[class_idx]),
                 "contributions": contributions,
                 "probability": float(proba[class_idx]),
-                # Sum of contributions should equal proba - base_value
+                # Sum of contributions should equal proba - base_value; similar logic as in regression case
                 "check": round(sum(contributions.values()), 3) - round(proba[class_idx] - base_values[class_idx], 3)
             })
         
         local_explanations.append({
             "row_index": i,
-            "prediction": convert_prediction(prediction),
+            "prediction": convert_predictions_and_class_labels(prediction),
             "class_wise_feature_contributions": class_explanations
         })
 
         return local_explanations
 
-
+############################################################
 # Main driver function for /explain-model endpoint
 def shap_values(start=0, end=5):
     model, X_test, task = load_model_and_test_data()
@@ -171,29 +169,27 @@ def shap_values(start=0, end=5):
     # Build a SHAP explainer object.
     explainer = shap.Explainer(model) # Explainer class automatically detects the model type
     base_values = explainer.expected_value
-    shap_values = explainer.shap_values(X_test) # shape: (num_rows, num_features) and is an np array
+    shap_values = explainer.shap_values(X_test) # shape: (num_rows, num_features) fore regression; (num_rows, num_features, num_classes) and is an np array
     global_importances = np.abs(shap_values).mean(axis=0) # Global importance (mean absolute SHAP value across rows)
-    # print(global_importances.shape)
 
     if task == 'regression':
         grouped_global_importances = group_global_shap_values_regression(global_importances, X_test.columns)
-        local_explanations = compute_local_shap_values_regression(model, X_test, shap_values)
-        # print(local_explanations)
+        local_explanations = compute_local_shap_values_regression(model, X_test, shap_values, base_values)
 
         return {
             "model_type": type(model).__name__,
-            # "baseline": baseline,
+            # "baseline": base_values,
             "global_feature_importance": grouped_global_importances,
             "local_explanations": local_explanations,
         }
 
     else:
-        grouped_global_importances = group_global_shap_values_classification(global_importances, X_test.columns)
+        grouped_global_importances = group_global_shap_values_classification(global_importances, X_test.columns, model.classes_)
         local_explanations = compute_local_shap_values_classification(model, X_test, shap_values, base_values)
-        # print(local_explanations)
+
         return {
             "model_type": type(model).__name__,
-            # "baseline": baseline,
+            # "baseline": base_values,
             "global_feature_importance": grouped_global_importances,
             "local_explanations": local_explanations,
         }

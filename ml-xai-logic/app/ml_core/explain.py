@@ -163,7 +163,7 @@ def compute_local_shap_values_classification(model, X_test, shap_values, base_va
 
 ############################################################
 # Main driver function for /explain-model endpoint
-def shap_values(start=0, end=5):
+def shap_values(start=0, end=1):
     model, X_test, task = load_model_and_test_data()
 
     # Build a SHAP explainer object.

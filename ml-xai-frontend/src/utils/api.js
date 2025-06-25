@@ -38,7 +38,7 @@ export const trainModel = async (target) => {
 };
 
 // Explain model
-export const getExplanations = async (start = 0, end = 5) => {
+export const getExplanations = async (start = 0, end = 1) => {
   const response = await axios.get(`${BASE_URL}/explain-model`, {
     params: { start, end },
   });

@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import UploadCSV from "./components/UploadCSV";
 import TargetSelector from "./components/TargetSelector";
 import TrainButton from "./components/TrainButton";
-
-
 import TrainingResults from "./components/TrainingResults";
+import ExplainModel from "./components/ExplainModel";
+
 
 function App() {
   const [csvSummary, setCsvSummary] = useState(null);
@@ -13,7 +13,8 @@ function App() {
   const [shapResult, setShapResult] = useState(null);   // stores SHAP explanations
 
   return (
-    <div className="min-h-screen bg-base-200 p-8">
+    // <div className="min-h-screen bg-base-200 p-8">
+    <div className="min-h-screen bg-base-200 p-8 flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-8">
       {/* Entire app is split into two columns */}
       <div className="flex flex-col md:flex-row gap-6">
         
@@ -59,6 +60,9 @@ function App() {
           {/* {shapResult && (
             <SHAPSummary result={shapResult} />
           )} */}
+          {
+           modelResult && <ExplainModel />
+          }
         </div>
       </div>
     </div>

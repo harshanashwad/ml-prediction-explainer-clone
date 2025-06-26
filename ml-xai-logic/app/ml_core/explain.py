@@ -174,7 +174,7 @@ def shap_values(start=0, end=1):
 
     if task == 'regression':
         grouped_global_importances = group_global_shap_values_regression(global_importances, X_test.columns)
-        local_explanations = compute_local_shap_values_regression(model, X_test, shap_values, base_values)
+        local_explanations = compute_local_shap_values_regression(model, X_test, shap_values, base_values, start, end)
 
         return {
             "model_type": type(model).__name__,
@@ -185,7 +185,7 @@ def shap_values(start=0, end=1):
 
     else:
         grouped_global_importances = group_global_shap_values_classification(global_importances, X_test.columns, model.classes_)
-        local_explanations = compute_local_shap_values_classification(model, X_test, shap_values, base_values)
+        local_explanations = compute_local_shap_values_classification(model, X_test, shap_values, base_values, start, end)
 
         return {
             "model_type": type(model).__name__,

@@ -44,8 +44,6 @@ function App() {
                 onSelect={setTarget}
               />
 
-              {/* 🧠 Placeholder: Train button and handler */}
-              {/* <TrainButton target={target} onTrainSuccess={setModelResult} /> */}
               <TrainButton target={target} onTrainSuccess={setModelResult} />
             </>
           )}
@@ -57,9 +55,6 @@ function App() {
             <TrainingResults result={modelResult} />
           )}
 
-          {/* {shapResult && (
-            <SHAPSummary result={shapResult} />
-          )} */}
           {
            modelResult && <ExplainModel />
           }

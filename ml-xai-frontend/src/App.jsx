@@ -10,7 +10,7 @@ function App() {
   const [csvSummary, setCsvSummary] = useState(null);
   const [target, setTarget] = useState("");
   const [modelResult, setModelResult] = useState(null); // stores training result (metrics, etc.)
-  const [shapResult, setShapResult] = useState(null);   // stores SHAP explanations
+  // const [shapResult, setShapResult] = useState(null);   // stores SHAP explanations
 
   return (
     // <div className="min-h-screen bg-base-200 p-8">

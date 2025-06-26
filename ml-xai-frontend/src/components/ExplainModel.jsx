@@ -39,10 +39,8 @@ function ExplainModel() {
 
       {explainData && (
         <div className="space-y-6 w-full">
-          <GlobalShapResults data={explainData.global_feature_importance} model_type={explainData.model_type}
-          />
-          <LocalShapResults data={explainData.local_explanations} model_type={explainData.model_type}
-          />
+          <GlobalShapResults data={explainData.global_feature_importance} model_type={explainData.model_type}/>
+          <LocalShapResults data={explainData.local_explanations} model_type={explainData.model_type}/>
         </div>
       )}
     </div>

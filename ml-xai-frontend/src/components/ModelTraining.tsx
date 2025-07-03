@@ -6,15 +6,29 @@ import { Brain, Play, CheckCircle, TrendingUp, Zap } from 'lucide-react';
 import { trainModel } from '@/utils/api';
 import { useToast } from '@/hooks/use-toast';
 
-const ModelTraining = ({ uploadData, onTrainingComplete }) => {
+const ModelTraining = ({ uploadData, target, targetType, onTrainingComplete }) => {
   const [isTraining, setIsTraining] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
   const [trainingData, setTrainingData] = useState(null);
-  const [selectedTarget, setSelectedTarget] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [showExplanationsButton, setShowExplanationsButton] = useState(false);
   const { toast } = useToast();
 
+  // Set model based on target type
+  useEffect(() => {
+    if (targetType === 'numeric') {
+      const modelName = 'Random Forest Regressor';
+      setSelectedModel(modelName);
+    }
+    if (targetType === 'categorical') {
+      const modelName = 'Random Forest Classifier';
+      setSelectedModel(modelName);
+    }
+
+  }, [targetType]);
+
   const startTraining = async () => {
-    if (!selectedTarget) {
+    if (!target) {
       toast({
         title: "No target selected",
         description: "Please select a target variable first.",
@@ -25,10 +39,10 @@ const ModelTraining = ({ uploadData, onTrainingComplete }) => {
 
     setIsTraining(true);
     try {
-      const result = await trainModel(selectedTarget);
+      const result = await trainModel(target);
       setTrainingData(result);
       setTrainingComplete(true);
-      onTrainingComplete(result);
+      setShowExplanationsButton(true);
       toast({
         title: "Training completed!",
         description: `${result.model_type} trained successfully.`,
@@ -43,6 +57,10 @@ const ModelTraining = ({ uploadData, onTrainingComplete }) => {
     } finally {
       setIsTraining(false);
     }
+  };
+
+  const handleViewExplanations = () => {
+    onTrainingComplete(trainingData);
   };
 
   const TrainingAnimation = () => (
@@ -68,39 +86,86 @@ const ModelTraining = ({ uploadData, onTrainingComplete }) => {
 
     const isClassification = data.task === 'classification';
     
+    // Helper function to determine font size based on content length
+    const getFontSize = (value) => {
+      const valueStr = String(value);
+      if (valueStr.length <= 4) return 'text-2xl';
+      if (valueStr.length <= 6) return 'text-xl';
+      if (valueStr.length <= 8) return 'text-lg';
+      return 'text-base';
+    };
+    
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        {isClassification ? (
-          <>
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="text-green-700 font-medium">Accuracy</div>
-              <div className="text-2xl font-bold text-green-900">{(data.metrics.accuracy * 100).toFixed(1)}%</div>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-blue-700 font-medium">Precision</div>
-              <div className="text-2xl font-bold text-blue-900">{(data.metrics.precision * 100).toFixed(1)}%</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <div className="text-purple-700 font-medium">F1 Score</div>
-              <div className="text-2xl font-bold text-purple-900">{(data.metrics.f1_score * 100).toFixed(1)}%</div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="text-green-700 font-medium">R² Score</div>
-              <div className="text-2xl font-bold text-green-900">{(data.metrics.r2 * 100).toFixed(1)}%</div>
-            </div>
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-blue-700 font-medium">MAE</div>
-              <div className="text-2xl font-bold text-blue-900">{data.metrics.mae.toLocaleString()}</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <div className="text-purple-700 font-medium">MSE</div>
-              <div className="text-2xl font-bold text-purple-900">{data.metrics.mse.toLocaleString()}</div>
-            </div>
-          </>
-        )}
+      <div className="mt-8 bg-gray-50 rounded-lg p-6">
+        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 text-green-500" />
+          Training Results
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {isClassification ? (
+            <>
+              <div className="bg-white p-4 rounded-lg border-2 border-black">
+                <div className="text-black font-medium">Accuracy</div>
+                <div className={`${getFontSize((data.metrics.accuracy * 100).toFixed(1) + '%')} font-bold text-black`}>
+                  {(data.metrics.accuracy * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border-2 border-black">
+                <div className="text-black font-medium">Precision</div>
+                <div className={`${getFontSize((data.metrics.precision * 100).toFixed(1) + '%')} font-bold text-black`}>
+                  {(data.metrics.precision * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border-2 border-black">
+                <div className="text-black font-medium">F1 Score</div>
+                <div className={`${getFontSize((data.metrics.f1_score * 100).toFixed(1) + '%')} font-bold text-black`}>
+                  {(data.metrics.f1_score * 100).toFixed(1)}%
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-white p-4 rounded-lg border-2 border-black">
+                <div className="text-black font-medium">R² Score</div>
+                <div className={`${getFontSize((data.metrics.r2 * 100).toFixed(1) + '%')} font-bold text-black`}>
+                  {(data.metrics.r2 * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border-2 border-black">
+                <div className="text-black font-medium">MAE</div>
+                <div className={`${getFontSize(data.metrics.mae.toLocaleString())} font-bold text-black`}>
+                  {data.metrics.mae.toLocaleString()}
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border-2 border-black">
+                <div className="text-black font-medium">MSE</div>
+                <div className={`${getFontSize(data.metrics.mse.toLocaleString())} font-bold text-black`}>
+                  {data.metrics.mse.toLocaleString()}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* Model Info */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-gray-600">Model Type:</span>
+            <span className="ml-2 font-medium">{data.model_type}</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Task:</span>
+            <span className="ml-2 font-medium capitalize">{data.task}</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Features Used:</span>
+            <span className="ml-2 font-medium">{data.final_columns?.length || 0}</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Training Samples:</span>
+            <span className="ml-2 font-medium">{data.row_count_after_preprocessing}</span>
+          </div>
+        </div>
       </div>
     );
   };
@@ -118,98 +183,69 @@ const ModelTraining = ({ uploadData, onTrainingComplete }) => {
           </p>
         </CardHeader>
         <CardContent>
-          {!isTraining && !trainingComplete && (
+          {!isTraining && (
             <div className="text-center">
-              {/* Target Selection */}
+              {/* Select Model Section */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-4">Select Target Variable</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {uploadData?.columns?.map((column, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedTarget(column)}
-                      className={`p-3 rounded-lg border-2 transition-all duration-200 ${
-                        selectedTarget === column
-                          ? 'border-blue-500 bg-blue-50 text-blue-900'
-                          : 'border-gray-200 hover:border-blue-300 text-gray-700'
-                      }`}
-                    >
-                      <span className="font-medium">{column}</span>
-                    </button>
-                  ))}
+                <h3 className="text-lg font-semibold mb-4">Select Model</h3>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setSelectedModel(selectedModel)}
+                    className="p-4 rounded-lg border-2 border-blue-500 bg-blue-50 shadow-md transition-all duration-200 hover:scale-102 min-w-[400px]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-blue-900">
+                        {selectedModel || 'Random Forest Regressor'}
+                      </span>
+                      <div className="h-2 w-2 rounded-full bg-blue-500" />
+                    </div>
+                  </button>
                 </div>
               </div>
 
-              <Button
-                onClick={startTraining}
-                disabled={!selectedTarget}
-                className={`px-8 py-4 text-lg transition-all duration-300 ${
-                  selectedTarget
-                    ? 'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl'
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
-              >
-                <Play className="h-5 w-5 mr-2" />
-                Start Training
-              </Button>
-              {selectedTarget && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Target: <span className="font-medium text-blue-600">{selectedTarget}</span>
-                </p>
+              {!trainingComplete && (
+                <>
+                  <Button
+                    onClick={startTraining}
+                    disabled={!target}
+                    className={`px-8 py-4 text-lg transition-all duration-300 ${
+                      target
+                        ? 'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl'
+                        : 'bg-gray-300 cursor-not-allowed'
+                    }`}
+                  >
+                    <Play className="h-5 w-5 mr-2" />
+                    Start Training
+                  </Button>
+                  {target && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Target: <span className="font-medium text-blue-600">{target}</span>
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* Display Metrics after training */}
+              {trainingComplete && trainingData && (
+                <ModelMetrics data={trainingData} />
+              )}
+
+              {/* View Explanations Button */}
+              {showExplanationsButton && (
+                <div className="mt-8">
+                  <Button
+                    onClick={handleViewExplanations}
+                    className="bg-green-600 hover:bg-green-700 px-8 py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <TrendingUp className="h-5 w-5 mr-2" />
+                    View SHAP Explanations
+                  </Button>
+                </div>
               )}
             </div>
           )}
 
           {isTraining && <TrainingAnimation />}
-
-          {trainingComplete && trainingData && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-6">
-                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-green-900 mb-2">Training Complete!</h3>
-                <p className="text-gray-600">Your {trainingData.model_type} is ready for analysis</p>
-              </div>
-
-              {/* Model Info */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-yellow-500" />
-                  Model Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Model Type:</span>
-                    <span className="ml-2 font-medium">{trainingData.model_type}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Task:</span>
-                    <span className="ml-2 font-medium capitalize">{trainingData.task}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Features Used:</span>
-                    <span className="ml-2 font-medium">{trainingData.final_columns?.length || 0}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Training Samples:</span>
-                    <span className="ml-2 font-medium">{trainingData.row_count_after_preprocessing}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metrics */}
-              <ModelMetrics data={trainingData} />
-
-              <div className="text-center mt-8">
-                <Button
-                  onClick={() => onTrainingComplete(trainingData)}
-                  className="bg-green-600 hover:bg-green-700 px-8 py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  View Explanations
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

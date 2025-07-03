@@ -2,10 +2,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Target, ChevronRight, Info } from 'lucide-react';
+import { Target, ChevronRight, Info, AlertTriangle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
 
 const TargetSelection = ({ uploadData, onTargetSelected }) => {
   const [selectedTarget, setSelectedTarget] = useState('');
+  const [targetType, setTargetType] = useState('');
 
   if (!uploadData || !uploadData.columns) {
     return (
@@ -22,12 +25,24 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
 
   const handleTargetSelect = (column) => {
     setSelectedTarget(column);
+    setTargetType(getColumnType(column));
   };
 
   const handleContinue = () => {
     if (selectedTarget) {
-      onTargetSelected(selectedTarget);
+      onTargetSelected(selectedTarget, targetType);
     }
+  };
+
+  const hasWarnings = uploadData.warnings && uploadData.warnings.length > 0;
+
+  const getColumnType = (column) => {
+    if (uploadData.column_types?.numeric?.includes(column)) {
+      return 'numeric';
+    } else if (uploadData.column_types?.categorical?.includes(column)) {
+      return 'categorical';
+    }
+    return null;
   };
 
   return (
@@ -37,6 +52,35 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
           <CardTitle className="flex items-center justify-center gap-2 text-2xl">
             <Target className="h-6 w-6 text-blue-600" />
             Select Target Variable
+            {hasWarnings && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="ml-2 relative">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 hover:text-amber-600 transition-colors" />
+                    <span className="absolute -top-1 -right-1 h-2 w-2 bg-amber-500 rounded-full"></span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="center">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <span className="font-medium text-sm">Dataset Warnings</span>
+                    </div>
+                    <div className="space-y-2">
+                      {uploadData.warnings.map((warning, index) => (
+                        <div key={index} className="flex items-start gap-2 p-2 bg-amber-50 rounded-md">
+                          <div className="h-1.5 w-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                          <span className="text-sm text-amber-800">{warning}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-2">
+                      These issues may affect model performance but won't prevent training.
+                    </p>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
           </CardTitle>
           <p className="text-gray-600 mt-2">
             Choose the column you want to predict (target variable)
@@ -49,20 +93,24 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="text-blue-700 font-medium">Rows:</span>
-                <span className="ml-2 text-blue-900">{uploadData.shape?.[0] || 'N/A'}</span>
+                <span className="ml-2 text-blue-900">{uploadData.row_count || 'N/A'}</span>
               </div>
               <div>
                 <span className="text-blue-700 font-medium">Columns:</span>
-                <span className="ml-2 text-blue-900">{uploadData.shape?.[1] || uploadData.columns?.length || 'N/A'}</span>
+                <span className="ml-2 text-blue-900">{uploadData.column_count || uploadData.columns?.length || 'N/A'}</span>
               </div>
               <div>
-                <span className="text-blue-700 font-medium">Missing:</span>
+                <span className="text-blue-700 font-medium">Missing Values:</span>
                 <span className="ml-2 text-blue-900">{uploadData.missing_values || 0}</span>
               </div>
-              <div>
-                <span className="text-blue-700 font-medium">Numeric:</span>
-                <span className="ml-2 text-blue-900">{uploadData.numeric_columns?.length || 0}</span>
-              </div>
+              {hasWarnings && (
+                <div>
+                  <span className="text-blue-700 font-medium">Issues:</span>
+                  <Badge variant="secondary" className="ml-2 text-xs bg-amber-100 text-amber-800">
+                    {uploadData.warnings.length}
+                  </Badge>
+                </div>
+              )}
             </div>
           </div>
 
@@ -70,7 +118,7 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
             {uploadData.columns.map((column, index) => {
               const isSelected = selectedTarget === column;
-              const isNumeric = uploadData.numeric_columns?.includes(column);
+              const columnType = getColumnType(column);
               
               return (
                 <button
@@ -89,13 +137,15 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
                     <div className={`h-2 w-2 rounded-full ${isSelected ? 'bg-blue-500' : 'bg-gray-300'}`} />
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      isNumeric 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-orange-100 text-orange-700'
-                    }`}>
-                      {isNumeric ? 'Numeric' : 'Categorical'}
-                    </span>
+                    {columnType && (
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        columnType === 'numeric'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        {columnType}
+                      </span>
+                    )}
                     {uploadData.sample_values?.[column] && (
                       <span className="text-xs text-gray-500 truncate max-w-20">
                         e.g., {uploadData.sample_values[column]}

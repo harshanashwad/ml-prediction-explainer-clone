@@ -148,7 +148,7 @@ const FileUpload = ({ onUploadSuccess }) => {
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1 w-1 bg-gray-400 rounded-full"></div>
-                  Tabular data with target variable
+                  Tabular data with a target variable
                 </li>
               </ul>
             </div>

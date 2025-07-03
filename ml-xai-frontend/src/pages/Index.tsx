@@ -12,6 +12,8 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadData, setUploadData] = useState(null);
   const [trainingData, setTrainingData] = useState(null);
+  const [target, setTarget] = useState('');
+  const [targetType, setTargetType] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const steps = [
@@ -23,10 +25,13 @@ const Index = () => {
 
   const handleUploadSuccess = (data) => {
     setUploadData(data);
+    console.log(data);
     setCurrentStep(2);
   };
 
-  const handleTargetSelected = () => {
+  const handleTargetSelected = (target, targetType) => {
+    setTarget(target);
+    setTargetType(targetType);
     setCurrentStep(3);
   };
 
@@ -48,8 +53,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
+        {/* Header - Added more top margin */}
+        <div className="text-center mb-8 mt-16 animate-fade-in">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             ML Prediction Explanation Interface
           </h1>
@@ -58,9 +63,9 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex justify-center items-center space-x-4 overflow-x-auto pb-4">
+        {/* Progress Steps - Added more top margin */}
+        <div className="mb-8 mt-12">
+          <div className="flex justify-center items-center space-x-4 overflow-x-auto pb-4 pt-4">
             {steps.map((step, index) => {
               const Icon = step.icon;
               const isActive = currentStep === step.id;
@@ -74,9 +79,9 @@ const Index = () => {
                     disabled={!isClickable}
                     className={`flex flex-col items-center p-4 rounded-lg transition-all duration-300 min-w-[120px] ${
                       isActive
-                        ? 'bg-blue-100 border-2 border-blue-500 shadow-lg scale-105'
+                        ? 'opacity-100 bg-blue-100 border-2 border-blue-500 shadow-lg scale-105'
                         : isCompleted
-                        ? 'bg-green-100 border-2 border-green-500 hover:scale-105 cursor-pointer'
+                        ? 'opacity-100 bg-green-100 border-2 border-green-500 hover:scale-105 cursor-pointer'
                         : 'bg-gray-100 border-2 border-gray-300'
                     } ${!isClickable ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
@@ -103,9 +108,9 @@ const Index = () => {
                     <span
                       className={`text-xs text-center ${
                         isActive
-                          ? 'text-blue-700'
+                          ? 'text-blue-800'
                           : isCompleted
-                          ? 'text-green-700'
+                          ? 'text-green-800'
                           : 'text-gray-400'
                       }`}
                     >
@@ -126,7 +131,7 @@ const Index = () => {
         </div>
 
         {/* Main Content */}
-        <div className="transition-all duration-500 ease-in-out">
+        <div className="transition-all duration-500 ease-in-out mb-16">
           {currentStep === 1 && (
             <FileUpload onUploadSuccess={handleUploadSuccess} />
           )}
@@ -139,6 +144,8 @@ const Index = () => {
           {currentStep === 3 && (
             <ModelTraining 
               uploadData={uploadData}
+              target={target}
+              targetType={targetType}
               onTrainingComplete={handleTrainingComplete}
             />
           )}

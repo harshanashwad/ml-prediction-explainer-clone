@@ -137,6 +137,7 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
                     <div className={`h-2 w-2 rounded-full ${isSelected ? 'bg-blue-500' : 'bg-gray-300'}`} />
                   </div>
                   <div className="mt-2 flex items-center gap-2">
+                    {/* dynamic label color for numeric and categorical types */}
                     {columnType && (
                       <span className={`text-xs px-2 py-1 rounded ${
                         columnType === 'numeric'
@@ -144,11 +145,6 @@ const TargetSelection = ({ uploadData, onTargetSelected }) => {
                           : 'bg-purple-100 text-purple-700'
                       }`}>
                         {columnType}
-                      </span>
-                    )}
-                    {uploadData.sample_values?.[column] && (
-                      <span className="text-xs text-gray-500 truncate max-w-20">
-                        e.g., {uploadData.sample_values[column]}
                       </span>
                     )}
                   </div>

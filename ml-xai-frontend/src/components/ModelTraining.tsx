@@ -6,15 +6,15 @@ import { Brain, Play, CheckCircle, TrendingUp, Zap } from 'lucide-react';
 import { trainModel } from '@/utils/api';
 import { useToast } from '@/hooks/use-toast';
 
-const ModelTraining = ({ uploadData, target, targetType, onTrainingComplete }) => {
+const ModelTraining = ({ uploadData, target, targetType, onTrainingComplete, onViewShapExplanations }) => {
   const [isTraining, setIsTraining] = useState(false);
   const [trainingComplete, setTrainingComplete] = useState(false);
-  const [trainingData, setTrainingData] = useState(null);
+  const [trainingResults, setTrainingResults] = useState(null);
   const [selectedModel, setSelectedModel] = useState('');
   const [showExplanationsButton, setShowExplanationsButton] = useState(false);
   const { toast } = useToast();
 
-  // Set model based on target type
+  // Set model based on target type and is triggered when we select target in TargetSelection.tsx
   useEffect(() => {
     if (targetType === 'numeric') {
       const modelName = 'Random Forest Regressor';
@@ -40,8 +40,9 @@ const ModelTraining = ({ uploadData, target, targetType, onTrainingComplete }) =
     setIsTraining(true);
     try {
       const result = await trainModel(target);
-      setTrainingData(result);
+      setTrainingResults(result);
       setTrainingComplete(true);
+      onTrainingComplete(result)  // this is the prop function to update the trainingResults state in Index.tsx
       setShowExplanationsButton(true);
       toast({
         title: "Training completed!",
@@ -60,7 +61,7 @@ const ModelTraining = ({ uploadData, target, targetType, onTrainingComplete }) =
   };
 
   const handleViewExplanations = () => {
-    onTrainingComplete(trainingData);
+    onViewShapExplanations();
   };
 
   const TrainingAnimation = () => (
@@ -226,8 +227,8 @@ const ModelTraining = ({ uploadData, target, targetType, onTrainingComplete }) =
               )}
 
               {/* Display Metrics after training */}
-              {trainingComplete && trainingData && (
-                <ModelMetrics data={trainingData} />
+              {trainingComplete && trainingResults && (
+                <ModelMetrics data={trainingResults} />
               )}
 
               {/* View Explanations Button */}

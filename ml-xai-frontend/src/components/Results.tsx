@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import GlobalShapResults from './GlobalShapResults';
 import LocalShapResults from './LocalShapResults';
 
-const Results = ({ trainingData }) => {
+const Results = ({ trainingResults }) => {
   const [explanationsData, setExplanationsData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('global');
@@ -16,10 +16,10 @@ const Results = ({ trainingData }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (trainingData) {
+    if (trainingResults) {
       fetchExplanations();
     }
-  }, [trainingData]);
+  }, [trainingResults]);
 
   const fetchExplanations = async (start = 0, end = 1) => {
     setIsLoading(true);
@@ -43,7 +43,7 @@ const Results = ({ trainingData }) => {
     fetchExplanations(rowRange.start, rowRange.end);
   };
 
-  if (!trainingData) {
+  if (!trainingResults) {
     return (
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-lg">
@@ -65,7 +65,7 @@ const Results = ({ trainingData }) => {
             Model Explanations & Results
           </CardTitle>
           <p className="text-gray-600 mt-2">
-            Understand how your {trainingData.model_type} makes predictions using SHAP values
+            Understand how your {trainingResults.model_type} makes predictions using SHAP values
           </p>
         </CardHeader>
         <CardContent>

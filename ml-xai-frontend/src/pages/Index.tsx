@@ -11,14 +11,13 @@ import Results from '@/components/Results';
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadData, setUploadData] = useState(null);
-  const [trainingData, setTrainingData] = useState(null);
+  const [trainingResults, setTrainingResults] = useState(null);
   const [target, setTarget] = useState('');
   const [targetType, setTargetType] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const steps = [
     { id: 1, title: 'Upload Data', icon: Upload, description: 'Upload your CSV dataset' },
-    { id: 2, title: 'Select Target', icon: FileText, description: 'Choose target variable' },
+    { id: 2, title: 'Select Target', icon: FileText, description: 'Choose a target variable' },
     { id: 3, title: 'Train Model', icon: Brain, description: 'Train ML model' },
     { id: 4, title: 'View Results', icon: BarChart3, description: 'Analyze explanations' }
   ];
@@ -36,17 +35,24 @@ const Index = () => {
   };
 
   const handleTrainingComplete = (data) => {
-    setTrainingData(data);
-    setCurrentStep(4);
+    setTrainingResults(data);
   };
+
+  const handleViewShapExplanations = () => {
+      setCurrentStep(4);
+  }
 
   const resetToStep = (stepNumber) => {
     setCurrentStep(stepNumber);
     if (stepNumber === 1) {
       setUploadData(null);
-      setTrainingData(null);
+      setTrainingResults(null);
+      setTarget('')
+      setTargetType('')
     } else if (stepNumber === 2) {
-      setTrainingData(null);
+      setTrainingResults(null);
+      setTarget('')
+      setTargetType('')
     }
   };
 
@@ -54,9 +60,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header - Added more top margin */}
-        <div className="text-center mb-8 mt-16 animate-fade-in">
+        <div className="text-center mb-8 mt-12 animate-fade-in">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            ML Prediction Explanation Interface
+            ML Prediction Explainer
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Upload your dataset, train a model, and get detailed explanations of how your ML model makes predictions
@@ -75,6 +81,7 @@ const Index = () => {
               return (
                 <div key={step.id} className="flex items-center">
                   <button
+                  // if the step is clickable, reset to the step
                     onClick={() => isClickable && resetToStep(step.id)}
                     disabled={!isClickable}
                     className={`flex flex-col items-center p-4 rounded-lg transition-all duration-300 min-w-[120px] ${
@@ -130,7 +137,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content: Render the relevant component based on current step */}
         <div className="transition-all duration-500 ease-in-out mb-16">
           {currentStep === 1 && (
             <FileUpload onUploadSuccess={handleUploadSuccess} />
@@ -147,10 +154,11 @@ const Index = () => {
               target={target}
               targetType={targetType}
               onTrainingComplete={handleTrainingComplete}
+              onViewShapExplanations = {handleViewShapExplanations}
             />
           )}
           {currentStep === 4 && (
-            <Results trainingData={trainingData} />
+            <Results trainingResults={trainingResults} />
           )}
         </div>
       </div>
